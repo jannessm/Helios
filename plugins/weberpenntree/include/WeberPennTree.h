@@ -101,8 +101,20 @@ class WeberPennTree{
   */
   WeberPennTree( helios::Context* context );
 
+  //! Weber-Penn Tree constructor
+  /**  \param[in] "context" Pointer to the Helios context
+       \param[in] "enableMessages" enable prints of this plugin
+  */
+  WeberPennTree( helios::Context* context, bool enableMessages );
+
   //! Unit testing routine
   int selfTest( void );
+
+  //! enable prints (default)
+  void enableMessages( void );
+
+  //! enable prints (default)
+  void disableMessages( void );
 
   //! Load tree library from an XML file
   /** \param[in] "filename" XML file with path relative to build directory 
@@ -232,5 +244,7 @@ class WeberPennTree{
 
   //! Names of additional primitive data to add to the Context
   std::vector<std::string> output_prim_data;
+
+  bool message_flag;
 
 };

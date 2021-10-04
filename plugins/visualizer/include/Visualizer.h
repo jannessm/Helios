@@ -38,8 +38,9 @@ int read_JPEG_file (const char * filename, std::vector<unsigned char> &texture, 
     \param[in] "width" Width of the graphics window in pixels
     \param[in] "height" Height of the graphics window in pixels
     \param[in] "window" Pointer to the window object
+    \param[in] "message_flag" Print writing statement
 */
-int write_JPEG_file ( const char* filename, const uint width, const uint height, void* _window );
+int write_JPEG_file ( const char* filename, const uint width, const uint height, void* _window, bool message_flag );
 
 //! Function to create a texture map from a PNG image
 /** \param[in] "filename" Name of the PNG image file

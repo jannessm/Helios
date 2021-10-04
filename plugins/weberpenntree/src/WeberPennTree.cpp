@@ -24,6 +24,30 @@ WeberPennTree::WeberPennTree( helios::Context* __context ){
 
   context = __context;
 
+  message_flag = true;
+
+  loadXML("plugins/weberpenntree/xml/WeberPennTreeLibrary.xml");
+
+  branchLevels = 2; //default number of branching levels for which primitives should be generated
+
+  trunk_segs = 30; //default number of radial triangular subdivisions of the trunk
+  
+  branch_segs = 6; //default number of radial triangular subdivisions of branches
+
+  leaf_segs = make_int2(1,1); //default number of patch subdivisions of each leaf
+
+  //seed the random number generator
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  generator.seed(seed);
+
+}
+
+WeberPennTree::WeberPennTree( helios::Context* __context, bool _enableMessages){
+
+  context = __context;
+
+  message_flag = _enableMessages;
+
   loadXML("plugins/weberpenntree/xml/WeberPennTreeLibrary.xml");
 
   branchLevels = 2; //default number of branching levels for which primitives should be generated
@@ -42,7 +66,9 @@ WeberPennTree::WeberPennTree( helios::Context* __context ){
 
 int WeberPennTree::selfTest( void ){
 
-  std::cout << "Building trees in the default library..." << std::flush;
+  if (message_flag) {
+    std::cout << "Building trees in the default library..." << std::flush;
+  }
 
   float spacing = 5;
 
@@ -72,9 +98,19 @@ int WeberPennTree::selfTest( void ){
 
   }
 
-  std::cout << "done." << std::endl;
+  if (message_flag) {
+    std::cout << "done." << std::endl;
+  }
   return 0;
   
+}
+
+void WeberPennTree::enableMessages() {
+  message_flag = true;
+}
+
+void WeberPennTree::disableMessages() {
+  message_flag = false;
 }
 
 uint WeberPennTree::buildTree( const char* treename, helios::vec3 origin  ){
@@ -694,7 +730,7 @@ void WeberPennTree::setBranchRecursionLevel( const uint level ){
 }
 
 void WeberPennTree::setTrunkSegmentResolution( const uint segs ){
-  if( segs<3 ){
+  if( segs<3 && message_flag ){
     std::cout << "WARNING (WeberPennTree::setTrunkSegmentResolution): cannot set trunk segment resolution less than 3. Ignoring this command." << std::endl;
   }else{
     trunk_segs=segs;
@@ -702,7 +738,7 @@ void WeberPennTree::setTrunkSegmentResolution( const uint segs ){
 }
 
 void WeberPennTree::setBranchSegmentResolution( const uint segs ){
-  if( segs<3 ){
+  if( segs<3 && message_flag ){
     std::cout << "WARNING (WeberPennTree::setBranchSegmentResolution): cannot set branch segment resolution less than 3. Ignoring this command." << std::endl;
   }else{
     branch_segs=segs;
@@ -710,7 +746,7 @@ void WeberPennTree::setBranchSegmentResolution( const uint segs ){
 }
 
 void WeberPennTree::setLeafSubdivisions( const helios::int2 segs ){
-  if( segs.x<1 || segs.y<1 ){
+  if( ( segs.x<1 || segs.y<1 ) && message_flag ){
     std::cout << "WARNING (WeberPennTree::setLeafSubdivisions): cannot set number of leaf subdivisions to less than 1. Ignoring this command." << std::endl;
   }else{
     leaf_segs=segs;
@@ -744,8 +780,9 @@ void WeberPennTree::seedRandomGenerator( const uint seed ){
 }
 
 void WeberPennTree::loadXML( const char* filename ){
-
-  std::cout << "Loading Weber Penn Tree library from XML file: " << filename << "..." << std::flush;
+  if ( message_flag ) {
+    std::cout << "Loading Weber Penn Tree library from XML file: " << filename << "..." << std::flush;
+  }
 
   // Using "pugixml" parser.  See pugixml.org
   pugi::xml_document xmldoc;
@@ -755,7 +792,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
   //error checking
   if (!result){
-    std::cout << "failed." << std::endl;
+    if ( message_flag ) {
+      std::cout << "failed." << std::endl;
+    }
     std::cerr << "XML [" << filename << "] parsed with errors, attr value: [" << xmldoc.child("node").attribute("attr").value() << "]\n";
     std::cerr << "Error description: " << result.description() << "\n";
     std::cerr << "Error offset: " << result.offset << " (error at [..." << (filename + result.offset) << "]\n\n";
@@ -765,7 +804,9 @@ void WeberPennTree::loadXML( const char* filename ){
   pugi::xml_node helios = xmldoc.child("helios");
 
   if( helios.empty() ){
-    std::cout << "failed." << std::endl;
+    if ( message_flag ) {
+      std::cout << "failed." << std::endl;
+    }
     std::cerr << "ERROR (loadXML): XML file must have tag '<helios> ... </helios>' bounding all other tags." << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -786,7 +827,9 @@ void WeberPennTree::loadXML( const char* filename ){
     //note: pugi loads xml data as a character.  need to separate it into 3 floats
     const char* shape_str = shape_node.child_value();
     if( strlen(shape_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): Shape was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -798,7 +841,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* basesize_str = basesize_node.child_value();
     if( strlen(basesize_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): BaseSize was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -810,7 +855,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* basesplits_str = basesplits_node.child_value();
     if( strlen(basesplits_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): BaseSplits was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -822,7 +869,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* basesplitsize_str = basesplitsize_node.child_value();
     if( strlen(basesplitsize_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): BaseSplitSize was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -834,7 +883,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* scale_str = scale_node.child_value();
     if( strlen(scale_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): Scale was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -846,7 +897,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* scalev_str = scalev_node.child_value();
     if( strlen(scalev_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): ScaleV was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -858,7 +911,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* zscale_str = zscale_node.child_value();
     if( strlen(zscale_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): ZScale was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -870,7 +925,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* zscalev_str = zscalev_node.child_value();
     if( strlen(zscalev_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): ZScaleV was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -882,7 +939,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* ratio_str = ratio_node.child_value();
     if( strlen(ratio_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): Ratio was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -894,7 +953,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* ratiopower_str = ratiopower_node.child_value();
     if( strlen(ratiopower_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): RatioPower was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -906,7 +967,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* lobes_str = lobes_node.child_value();
     if( strlen(lobes_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): Lobes was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -918,7 +981,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* lobedepth_str = lobedepth_node.child_value();
     if( strlen(lobedepth_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): LobeDepth was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -930,7 +995,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* flare_str = flare_node.child_value();
     if( strlen(flare_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): Flare was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -942,7 +1009,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* levels_str = levels_node.child_value();
     if( strlen(levels_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): Levels was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -962,7 +1031,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* nsegsplits_str = nsegsplits_node.child_value();
     if( strlen(nsegsplits_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nSegSplits was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -972,10 +1043,10 @@ void WeberPennTree::loadXML( const char* filename ){
     std::istringstream nsegsplits_stream(nsegsplits_str);
     for( int i=0; i<endLevel; i++ ){
       if( nsegsplits_stream.peek()==EOF ){
-	std::cerr << "ERROR (WeberPennTree::loadXML): nSegSplits was not given for level " << i << " of tree " << label << "." << std::endl;
-	exit(EXIT_FAILURE);
+	      std::cerr << "ERROR (WeberPennTree::loadXML): nSegSplits was not given for level " << i << " of tree " << label << "." << std::endl;
+        exit(EXIT_FAILURE);
       }else{
-	nsegsplits_stream >> params.nSegSplits.at(i);
+	      nsegsplits_stream >> params.nSegSplits.at(i);
       }
     }
 
@@ -984,7 +1055,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* nsplitangle_str = nsplitangle_node.child_value();
     if( strlen(nsplitangle_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nSplitAngle was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -994,10 +1067,10 @@ void WeberPennTree::loadXML( const char* filename ){
     std::istringstream nsplitangle_stream(nsplitangle_str);
     for( int i=0; i<endLevel; i++ ){
       if( nsplitangle_stream.peek()==EOF ){
-	std::cerr << "ERROR (WeberPennTree::loadXML): nSplitAngle was not given for level " << i << " of tree " << label << "." << std::endl;
-	exit(EXIT_FAILURE);
+        std::cerr << "ERROR (WeberPennTree::loadXML): nSplitAngle was not given for level " << i << " of tree " << label << "." << std::endl;
+        exit(EXIT_FAILURE);
       }else{
-	nsplitangle_stream >> params.nSplitAngle.at(i);
+	      nsplitangle_stream >> params.nSplitAngle.at(i);
       }
     }
 
@@ -1006,7 +1079,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* nsplitanglev_str = nsplitanglev_node.child_value();
     if( strlen(nsplitanglev_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nSplitAngleV was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1028,7 +1103,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* ncurveres_str = ncurveres_node.child_value();
     if( strlen(ncurveres_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nCurveRes was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1038,10 +1115,10 @@ void WeberPennTree::loadXML( const char* filename ){
     std::istringstream ncurveres_stream(ncurveres_str);
     for( int i=0; i<endLevel; i++ ){
       if( ncurveres_stream.peek()==EOF ){
-	std::cerr << "ERROR (WeberPennTree::loadXML): nCurveRes was not given for level " << i << " of tree " << label << "." << std::endl;
-	exit(EXIT_FAILURE);
+        std::cerr << "ERROR (WeberPennTree::loadXML): nCurveRes was not given for level " << i << " of tree " << label << "." << std::endl;
+        exit(EXIT_FAILURE);
       }else{
-	ncurveres_stream >> params.nCurveRes.at(i);
+	      ncurveres_stream >> params.nCurveRes.at(i);
       }
     }
 
@@ -1050,7 +1127,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* ncurve_str = ncurve_node.child_value();
     if( strlen(ncurve_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nCurve was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1072,7 +1151,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* ncurvev_str = ncurvev_node.child_value();
     if( strlen(ncurvev_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nCurveV was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1094,7 +1175,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* ncurveback_str = ncurveback_node.child_value();
     if( strlen(ncurveback_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nCurveBack was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1116,7 +1199,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* nlength_str = nlength_node.child_value();
     if( strlen(nlength_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nLength was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1138,7 +1223,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* nlengthv_str = nlengthv_node.child_value();
     if( strlen(nlengthv_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nLengthV was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1160,7 +1247,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* ntaper_str = ntaper_node.child_value();
     if( strlen(ntaper_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nTaper was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1182,7 +1271,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* ndownangle_str = ndownangle_node.child_value();
     if( strlen(ndownangle_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nDownAngle was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1204,7 +1295,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* ndownanglev_str = ndownanglev_node.child_value();
     if( strlen(ndownanglev_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nDownAngleV was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1226,7 +1319,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* nrotate_str = nrotate_node.child_value();
     if( strlen(nrotate_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nRotate was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1248,7 +1343,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* nrotatev_str = nrotatev_node.child_value();
     if( strlen(nrotatev_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nRotateV was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1270,7 +1367,9 @@ void WeberPennTree::loadXML( const char* filename ){
 
      const char* nbranches_str = nbranches_node.child_value();
     if( strlen(nbranches_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): nBranches was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -1292,7 +1391,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* leaves_str = leaves_node.child_value();
     if( strlen(leaves_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): Leaves was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -1304,7 +1405,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* leaffile_str = deblank(leaffile_node.child_value());
     if( strlen(leaffile_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): LeafFile was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -1316,7 +1419,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* leafscale_str = leafscale_node.child_value();
     if( strlen(leafscale_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): LeafScale was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -1328,7 +1433,9 @@ void WeberPennTree::loadXML( const char* filename ){
     
     const char* leafscalex_str = leafscalex_node.child_value();
     if( strlen(leafscalex_str)==0 ){
-      std::cout << "failed." << std::endl;
+      if ( message_flag ) {
+        std::cout << "failed." << std::endl;
+      }
       std::cerr << "ERROR (WeberPennTree::loadXML): LeafScaleX was not given for tree " << label << "." << std::endl;
       exit(EXIT_FAILURE);
     }else{
@@ -1375,7 +1482,7 @@ void WeberPennTree::loadXML( const char* filename ){
 	tsum += leafAngleDist.at(i)*dTheta;
 	params.leafAngleCDF.at(i) = tsum;
       }
-      if( fabs(tsum-1.f)>0.001 ){
+      if( fabs(tsum-1.f)>0.001 && message_flag ){
 	std::cout << "WARNING (WeberPennTree::loadXML): Leaf angle distribution for tree " << label << " does not sum to 1. Assuming isotropic." << std::endl;
 	std::cout << params.leafAngleCDF.back() << std::endl;
 	params.leafAngleCDF.resize(0);
@@ -1391,9 +1498,11 @@ void WeberPennTree::loadXML( const char* filename ){
   }
 
   if( tree_count==0 ){
-    std::cout << "failed." << std::endl;
+    if ( message_flag ) {
+      std::cout << "failed." << std::endl;
+    }
     std::cerr << "ERROR (WeberPennTree::loadXML): XML file " << filename << " did not contain any tree definitions." << std::endl;
-  }else{
+  }else if ( message_flag ){
     std::cout << "done." << std::endl;
     std::cout << "Loaded " << tree_count << " tree definition(s)." << std::endl; 
   }
@@ -1405,7 +1514,7 @@ void WeberPennTree::optionalOutputPrimitiveData( const char* label ){
 
   if( strcmp(label,"element_type")==0 || strcmp(label,"branch_radius")==0 ){
     output_prim_data.push_back( label );
-  }else{
+  }else if ( message_flag ){
     std::cout << "WARNING (WeberPennTree::optionalOutputPrimitiveData): unknown optional output primitive data " << label << std::endl;
   }
   

@@ -123,9 +123,11 @@ int read_JPEG_file (const char * filename, std::vector<unsigned char> &texture, 
   return 0;
 }
 
-int write_JPEG_file ( const char* filename, const uint width, const uint height, void* _window ){
+int write_JPEG_file ( const char* filename, const uint width, const uint height, void* _window, bool message_flag){
 
-  std::cout << "writing JPEG image: " << filename << std::endl;
+  if ( message_flag ) {
+    std::cout << "writing JPEG image: " << filename << std::endl;
+  }
 
   const uint bsize = 3 * width * height;
   std::vector<GLubyte> screen_shot_trans;
@@ -826,7 +828,7 @@ void Visualizer::printWindow( void ){
 
 void Visualizer::printWindow( const char* outfile ){
   
-  write_JPEG_file( outfile, Wframebuffer, Hframebuffer, window );
+  write_JPEG_file( outfile, Wframebuffer, Hframebuffer, window, message_flag );
 
 }
 
