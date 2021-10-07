@@ -333,9 +333,9 @@ void Visualizer::initialize( uint __Wdisplay, uint __Hdisplay, int aliasing_samp
 
   //Initialize OpenGL context and open graphic window
 
-  if( message_flag ){
-    std::cout << "Initializing graphics..." << std::flush;
-  }
+  // if( message_flag ){
+  //   std::cout << "Initializing graphics..." << std::flush;
+  // }
     
   // Initialise GLFW
   if( !glfwInit() ){
@@ -604,9 +604,9 @@ void Visualizer::initialize( uint __Wdisplay, uint __Hdisplay, int aliasing_samp
 
   assert( checkerrors() );
 
-  if( message_flag ){
-    std::cout << "done." << std::endl;
-  }
+  // if( message_flag ){
+  //   std::cout << "done." << std::endl;
+  // }
     
 }
 

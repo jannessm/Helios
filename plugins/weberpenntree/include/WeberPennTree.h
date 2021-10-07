@@ -16,6 +16,8 @@
 
 #include "Context.h"
 #include <random>
+#include <set>
+#include <map>
 
 struct WeberPennTreeParameters{
 
@@ -106,6 +108,8 @@ class WeberPennTree{
        \param[in] "enableMessages" enable prints of this plugin
   */
   WeberPennTree( helios::Context* context, bool enableMessages );
+  
+  ~WeberPennTree();
 
   //! Unit testing routine
   int selfTest( void );
@@ -156,6 +160,26 @@ class WeberPennTree{
   */
   std::vector<uint> getAllUUIDs( const uint TreeID );
 
+  //! Remove trunk primitives
+  /** \param[in] "TreeID" Identifer of tree.
+  */
+  void removeTrunks( const uint TreeID );
+
+  //! Remove branch primitives that make up the tree leaves
+  /** \param[in] "TreeID" Identifer of tree.
+  */
+  void removeBranches( const uint TreeID );
+
+  //! Remove leaf primitives that make up the tree leaves
+  /** \param[in] "TreeID" Identifer of tree.
+  */
+  void removeLeaves( const uint TreeID );
+
+  //! Remove whole tree
+  /** \param[in] "TreeID" Identifer of tree.
+  */
+  void removeTree( const uint TreeID );
+
   //! Only create branch primitives up to a certain recursion level (leaves are still created for all levels).
   /** Very small branches may add a lot of unnecessary triangles. This function limits the number of recursive branch levels to generate primitives. The default is to generate primitives for recursion levels 0-2.
       \param[in] "level" Branch recursion levels for which primitives should be generated. For example, level=1 would generate primitives for the trunk (level 0), and the first branching level (level 1).
@@ -205,14 +229,16 @@ class WeberPennTree{
   helios::Context* context;
 
   //! UUIDs for trunk primitives
-  std::vector<std::vector<uint> > UUID_trunk;
+  std::map<uint, std::vector<uint> > UUID_trunk;
 
   //! UUIDs for branch primitives
-  std::vector<std::vector<uint> > UUID_branch;
+  std::map<uint, std::vector<uint> > UUID_branch;
 
   //! UUIDs for leaf primitives
-  std::vector<std::vector<uint> > UUID_leaf;
+  std::map<uint, std::vector<uint> > UUID_leaf;
 
+  std::set<uint> Tree_UUIDs;
+  
   std::map<std::string,WeberPennTreeParameters> trees_library;
   
   //! Spawn a branch, which recurses until leaves
@@ -226,7 +252,7 @@ class WeberPennTree{
       \param[in] "phirot" Angle of rotation of child about parent's z-axis
       \param[in] "scale" Tree scaling factor
   */
-  void recursiveBranch( WeberPennTreeParameters parameters, uint n, uint seg_start, helios::vec3 base_position, helios::vec3 parent_normal, helios::SphericalCoord child_rotation, float length_parent, float radius_parent, float offset_child, helios::vec3 origin, float scale, const uint leaf_template );
+  void recursiveBranch( WeberPennTreeParameters parameters, uint n, uint seg_start, helios::vec3 base_position, helios::vec3 parent_normal, helios::SphericalCoord child_rotation, float length_parent, float radius_parent, float offset_child, helios::vec3 origin, float scale, const uint leaf_template, const uint TreeId);
 
   float getVariation( float V );
  
@@ -246,5 +272,7 @@ class WeberPennTree{
   std::vector<std::string> output_prim_data;
 
   bool message_flag;
+
+  void remove(const uint TreeID, std::map<uint, std::vector<uint>>* UUIDs);
 
 };

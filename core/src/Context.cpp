@@ -4776,7 +4776,7 @@ void Context::deletePrimitive( const std::vector<uint> UUIDs ){
 
 void Context::deletePrimitive( const uint UUID ){
 
-  if( primitives.find(UUID) == primitives.end() ){
+  if( primitives.count(UUID) == 0 ){
     std::cerr << "ERROR (deletePrimitive: UUID of " << UUID << " not found in the context." << std::endl;
     throw(1);
   }
